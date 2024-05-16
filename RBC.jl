@@ -75,7 +75,7 @@ end
 Iᵗ(T) = Matrix(I, T, T);
 Oᵗ(T) = zeros(T, T);
 Δᵗ(T) = Iᵗ(T) - [zeros(T,1) Iₜ[:,1:end-1]];
-
+ 
 
 # ------------------------------------------------------------------------------
 # Main Function To Solve The Model 
