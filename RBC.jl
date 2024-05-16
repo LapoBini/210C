@@ -276,7 +276,7 @@ for k in 1:6
     plot(size =(700,400))
     hline!([0], label = "", color = "black", linewidth = 1)
 
-    # Plot over different number of parameters
+    # Plot over different number of parameters for each variable
     for j in 1:J
         plot!(collect(1:1:T), IRF[:,k,j], title = var[k], xlabel = "Horizon",
             label = L"v = "*vv[j]*"   "*L" \theta = "*string(round(θ[j], digits = 5)),
