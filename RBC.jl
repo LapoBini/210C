@@ -25,7 +25,7 @@ using DataFrames, LinearAlgebra, Dates, Statistics, Plots, LaTeXStrings
 χ  = 1.0;
 β  = 0.99;
 ρₘ = 0.99;
-T  = 100;
+T  = 150;
 v  = [0.25; 0.5; 0.999; 2.0; 4.0];
 θ  = zeros(5);
 
@@ -250,6 +250,7 @@ end;
 J   = length(v);
 IRF = zeros(T, 6, J);
 var = ["Output"; "Real Wage"; "Consumption"; "Composite Basket"; "Price"; "Real Rate"];
+sav = ["output"; "real_wage"; "cConsumption"; "composite Basket"; "price"; "real_rate"]
 
 # Create directory 
 ind_dir  = readdir("./");
@@ -261,13 +262,23 @@ ind_dir  = readdir("./");
 end
 
 # Generate Charts
-#for k in 1:6
-k = 1
-j = 1
+c = ["Orange"; "Purple"; "Brown"; "Deepskyblue"; "Lime"]
 
-plot(collect(1:1:100), IRF[:,k,j], title = var[k], xlabel = "Horizon",
-     label = L"v = "*string(v[j])*L"; \theta = "*string(round(θ[j], digits = 5)),
-     )
+for k in 1:6
+    for j in 1:J
+        plot(collect(1:1:T), IRF[:,k,j], title = var[k], xlabel = "Horizon",
+            label = L"v = "*string(v[j])*"   "*L" \theta = "*string(round(θ[j], digits = 5)),
+            color = c[j], linewidth = 2.5, size = size=(700,400), xlims = (0, T),
+            xticks = collect(0:25:T),
+            ytickfontsize  = 9, xtickfontsize  = 9, titlefontsize = 17,
+            yguidefontsize = 13, legendfontsize = 9, boxfontsize = 15,
+            framestyle = :box, left_margin = 4Plots.mm, right_margin = 4Plots.mm,
+            bottom_margin = 2Plots.mm, top_margin = 4Plots.mm,
+            legend = :bottomright)
+    end
+    hline!([0], label = "", color = "black", linewidth = 1)
+    savefig("./results"*sav[k]*".pdf")
+end
 
 
 
