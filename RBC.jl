@@ -2,8 +2,12 @@
 # Solving a RBC Model Via Sequence space
 # ------------------------------------------------------------------------------
 # Author: Lapo Bini, lbini@ucsd.edu
-#
 # Problem Set 1 - Prof. Johannes Wieland - 05/15/2024
+#
+# Instead of using p̂ₜ as endogenous variable as my collegues did, I am going to 
+# use only n̂ₜ as endogenous variable, which will be give me a good computational 
+# advantage. The target condition that I use in H(U,Z) = 0 is the bond demand 
+# equation. 
 # ------------------------------------------------------------------------------
 
 
@@ -211,9 +215,19 @@ dYdZ = [ϕya ϕym; ϕwa ϕwm; ϕca ϕcm; ϕxa ϕxm; ϕpa ϕpm; ϕqa ϕqm];
 #                         (i)  dHdU = ∂H/∂Y ⋅ ∂Y/∂U 
 #                         (ii) dHdZ = ∂H/∂Y ⋅ ∂Y/∂Z 
 # ------------------------------------------------------------------------------
+# Compute single blocks 
 dHdU = dHdY * dYdU;
 dHdZ = (dHdY * dYdZ);
 dUdZ = -1 .* ( dHdU \ dHdZ);
-dYdZ = dYdU * dUdZ + dYdZ;
+
+# Know compute the IRF matrix, dimension is (nT x Tk) where k is the number of 
+# exogenous shock
+dY = dYdU * dUdZ + dYdZ;
+
+# Construct path for the shock. Remember that m̂ follows an AR(1) process
+ϵₐ = zeros(T,1);
+ϵₘ = 1 .* [(ρₘ)^t for t in 0:T-1]; 
+
+
 
 
