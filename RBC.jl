@@ -20,9 +20,9 @@ using DataFrames, LinearAlgebra, Dates, Statistics, Plots, GrowableArrays
 # ------------------------------------------------------------------------------
 # Calibration parameters
 # ------------------------------------------------------------------------------
-γ  = 1; 
-ρ  = 1; 
-χ  = 1;
+γ  = 1.0; 
+ρ  = 1.0; 
+χ  = 1.0;
 β  = 0.99;
 ρₘ = 0.99;
 T  = 100;
@@ -51,7 +51,7 @@ function steady_state_c(χ, θ, β, v, γ, ρ)
 
     return Cˢˢ
     
-end
+end;
 
 function steady_state_mp(Cˢˢ, θ, β, v)
 
@@ -60,7 +60,7 @@ function steady_state_mp(Cˢˢ, θ, β, v)
 
     return MPˢˢ
 
-end
+end;
 
 function steady_state_x(Cˢˢ, MPˢˢ, θ, v) 
 
@@ -69,7 +69,7 @@ function steady_state_x(Cˢˢ, MPˢˢ, θ, v)
 
     return Xˢˢ
 
-end 
+end;
 
 # Functions to construct identity matrix, zero matrix, Differencing matrix
 Iᵗ(T) = Matrix(I, T, T);
@@ -82,9 +82,9 @@ Oᵗ(T) = zeros(T, T);
 # ------------------------------------------------------------------------------
 function RBC_solver(
     T::Int64,    # Time horizon IRF
-    γ::Int64,    # Elasticity of Intertemporal substitution 
-    ρ::Int64,    # Inverse Frisch elasticity of labor supply
-    χ::Int64,    # Preference for leisure
+    γ::Float64,    # Elasticity of Intertemporal substitution 
+    ρ::Float64,    # Inverse Frisch elasticity of labor supply
+    χ::Float64,    # Preference for leisure
     β::Float64,  # Discount Factor
     ρₘ::Float64, # Parameter AR(1) money supply shock m̂ₜ = ρₘ m̂ₜ₋₁ + ϵᵐₜ
     v::Float64,  # Parameter CES aggregator composite basket consumption vs money
@@ -239,7 +239,7 @@ function RBC_solver(
 
     return IRF
 
-end
+end;
 
 
 
