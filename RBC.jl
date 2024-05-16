@@ -250,7 +250,7 @@ end;
 J   = length(v);
 IRF = zeros(T, 6, J);
 var = ["Output"; "Real Wage"; "Consumption"; "Composite Basket"; "Price"; "Real Rate"];
-sav = ["output"; "real_wage"; "cConsumption"; "composite Basket"; "price"; "real_rate"]
+sav = ["output"; "real_wage"; "consumption"; "composite Basket"; "price"; "real_rate"]
 
 # Create directory 
 ind_dir  = readdir("./");
@@ -262,22 +262,31 @@ ind_dir  = readdir("./");
 end
 
 # Generate Charts
-c = ["Orange"; "Purple"; "Brown"; "Deepskyblue"; "Lime"]
-
+c  = ["Orange"; "Purple"; "Brown"; "Deepskyblue"; "Lime"];
+vv = [".25"; ".5"; "1"; "2"; "4"];
 for k in 1:6
-    for j in 1:J
-        plot(collect(1:1:T), IRF[:,k,j], title = var[k], xlabel = "Horizon",
-            label = L"v = "*string(v[j])*"   "*L" \theta = "*string(round(θ[j], digits = 5)),
-            color = c[j], linewidth = 2.5, size = size=(700,400), xlims = (0, T),
-            xticks = collect(0:25:T),
-            ytickfontsize  = 9, xtickfontsize  = 9, titlefontsize = 17,
-            yguidefontsize = 13, legendfontsize = 9, boxfontsize = 15,
-            framestyle = :box, left_margin = 4Plots.mm, right_margin = 4Plots.mm,
-            bottom_margin = 2Plots.mm, top_margin = 4Plots.mm,
-            legend = :bottomright)
-    end
+
+    # Add steady state level
+    plot(size =(700,400))
     hline!([0], label = "", color = "black", linewidth = 1)
-    savefig("./results"*sav[k]*".pdf")
+
+    # Plot over different number of parameters
+    for j in 1:J
+        plot!(collect(1:1:T), IRF[:,k,j], title = var[k], xlabel = "Horizon",
+            label = L"v = "*vv[j]*"   "*L" \theta = "*string(round(θ[j], digits = 5)),
+            color = c[j], linewidth = 4)
+    end
+
+    # Adjust plot
+    plot!(xlims = (0, T), xticks = collect(0:25:T), 
+          ytickfontsize  = 9, xtickfontsize  = 9, 
+          titlefontsize = 17, yguidefontsize = 13, legendfontsize = 9, 
+          boxfontsize = 15, framestyle = :box, left_margin = 4Plots.mm, 
+          right_margin = 4Plots.mm, bottom_margin = 2Plots.mm, 
+          top_margin = 4Plots.mm, legend = :bottomright)
+
+    # Save 
+    savefig("./results/"*sav[k]*".pdf")
 end
 
 
