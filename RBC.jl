@@ -88,7 +88,7 @@ function RBC_solver(
 
     # ------------------------------------------------------------------------------
     # Sequence space method works in that way: given a system of equilibrium 
-    # condition of the model, I can express all of them as a function of few 
+    # conditions of the model, I can express all of them as a function of few 
     # endogenous (U) variables and the exogenous shocks (Z):
     #
     #                                    Y = Y(U,Z)
@@ -100,7 +100,7 @@ function RBC_solver(
     #
     # Then we have that H(Y) = H(M(U,Z)) = 0 and by taking the total derivative we get:
     #
-    #                              H(M(U,Z)) = H(U,Z) = 0
+    #                              H(Y(U,Z)) = H(U,Z) = 0
     #                              dH = dH/dU + dH/dZ = 0
     #                               dU = - (dHdU)⁻¹ dHdZ
     #
@@ -249,15 +249,15 @@ end;
 # Allocation and prels 
 J   = length(v);
 IRF = zeros(T, 6, J);
-var = ["Output"; "Real Wage"; "Consumption"; "Composite Basket"; "Price"; "Real Rate"];
-sav = ["output"; "real_wage"; "consumption"; "composite Basket"; "price"; "real_rate"]
+var = ["Output"; "Real Wage"; "Consumption"; "Composite Basket"; "Price"; "Nominal Rate"];
+sav = ["output"; "real_wage"; "consumption"; "composite Basket"; "price"; "nominal_rate"]
 
 # Create directory 
 ind_dir  = readdir("./");
 "results" in ind_dir ? nothing : mkdir("./results");
 
 # Solve the model for different values of the parameters
-@time for j in 1:J
+for j in 1:J
     IRF[:,:,j] = RBC_solver(T,γ,ρ,χ,β,ρₘ,v[j],θ[j])
 end
 
