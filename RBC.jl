@@ -42,21 +42,27 @@ end
 function steady_state_c(χ, θ, β, v, γ, ρ)
 
     # Blocks
-    aux1 = (1 - θ)^((1-γ)/ρ+γ);
-    aux2 = (1 + θ^(-1/v) * (1-θ)^((1-2v)/v) * (1-β)^((v-1)/v))^(((v-γ)/(1-v))*(1/(ρ+γ)))
-    aux3 = χ^(-1/(ρ+γ))
+    aux1 = (1 - θ)^(1/(v-γ))
+    aux2 = ((1-θ) + θ^(1/v) * ((1/((1 - θ)*(1 - β)))))^((1-v)/v)
+    aux3 = χ^(-1/(v+γ)) 
 
     # Compute steady state value of Cˢˢ
-    Cˢˢ = aux1 * aux2 * aux3
+    Cˢˢ = (aux1 * aux2 * aux3)^((v-γ)/(ρ+γ))
 
     return Cˢˢ
     
 end;
 
-function steady_state_mp(Cˢˢ, θ, β, v)
+function steady_state_mp(θ, β, v, χ, γ)
+
+    # blocks
+    aux1 = (θ/((1-θ)*(1 - β)))^(1/v);
+    aux2 = χ^(-1/(v - γ))
+    aux3 = (1 - θ)^(1/(v - γ))
+    aux4 = ((1 - θ) + θ^(1/v) * ((1/((1-θ)*(1-β)))^((1 - v)/v)))^(1/(1-v))
 
     # Compute steady state value of (M/P)ˢˢ
-    MPˢˢ = (1-β)^(-1/v) * ((1-θ)/θ)^(1/v) * Cˢˢ
+    MPˢˢ = (aux1 * aux2 * aux3 * aux4)^((v-γ)/(ρ+γ))
 
     return MPˢˢ
 
@@ -159,7 +165,7 @@ function RBC_solver(
     ϕbdy = Oₜ;
     ϕbdw = Oₜ;
     ϕbdc = v .* Δₜ;
-    ϕbdx = (γ - v) .* Δₜ;
+    ϕbdx = -(v-γ) .* Δₜ;
     ϕbdp = Δₜ;
     ϕbdq = -1 .* Iₜ;
 
@@ -170,7 +176,7 @@ function RBC_solver(
     # 2 - Compute ∂Y/∂U
     # ------------------------------------------------------------------------------
     C    = steady_state_c(χ, θ, β, v, γ, ρ);
-    MP   = steady_state_mp(C, θ, β, v);
+    MP   = steady_state_mp(θ, β, v, χ, γ);
     X    = steady_state_x(C, MP, θ, v);
 
     A    = θ * (MP/X)^(1-v);
@@ -288,9 +294,3 @@ for k in 1:6
     # Save 
     savefig("./results/"*sav[k]*".pdf")
 end
-
-
-
-
-
-
