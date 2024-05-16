@@ -14,7 +14,7 @@
 # ------------------------------------------------------------------------------
 # Packages
 # ------------------------------------------------------------------------------
-using DataFrames, LinearAlgebra, Dates, Statistics, Plots, GrowableArrays
+using DataFrames, LinearAlgebra, Dates, Statistics, Plots, LaTeXStrings
 
 
 # ------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ using DataFrames, LinearAlgebra, Dates, Statistics, Plots, GrowableArrays
 β  = 0.99;
 ρₘ = 0.99;
 T  = 100;
-v  = [0.25; 0.5; 0.999; 2; 4];
+v  = [0.25; 0.5; 0.999; 2.0; 4.0];
 θ  = zeros(5);
 
 # Calibration Θ (relative weights consumption and money demand)
@@ -70,11 +70,6 @@ function steady_state_x(Cˢˢ, MPˢˢ, θ, v)
     return Xˢˢ
 
 end;
-
-# Functions to construct identity matrix, zero matrix, Differencing matrix
-Iᵗ(T) = Matrix(I, T, T);
-Oᵗ(T) = zeros(T, T);
-Δᵗ(T) = Iᵗ(T) - [zeros(T,1) Iₜ[:,1:end-1]];
  
 
 # ------------------------------------------------------------------------------
@@ -139,6 +134,11 @@ function RBC_solver(
     # ------------------------------------------------------------------------------
     # 0 - Preliminary Stuff 
     # ------------------------------------------------------------------------------
+    # Functions to construct identity matrix, zero matrix, Differencing matrix
+    Iᵗ(T) = Matrix(I, T, T);
+    Oᵗ(T) = zeros(T, T);
+    Δᵗ(T) = Iᵗ(T) - [zeros(T,1) Iₜ[:,1:end-1]];
+
     # Create identity matrix, zero matrix, and difference matrix 
     Iₜ = Iᵗ(T);
     Oₜ = Oᵗ(T);
@@ -240,6 +240,34 @@ function RBC_solver(
     return IRF
 
 end;
+
+
+# ------------------------------------------------------------------------------
+# Produce Results
+# ------------------------------------------------------------------------------
+# Loop over different parameters calibration 
+# Allocation and prels 
+J   = length(v);
+IRF = zeros(T, 6, J);
+var = ["Output"; "Real Wage"; "Consumption"; "Composite Basket"; "Price"; "Real Rate"];
+
+# Create directory 
+ind_dir  = readdir("./");
+"results" in ind_dir ? nothing : mkdir("./results");
+
+# Solve the model for different values of the parameters
+@time for j in 1:J
+    IRF[:,:,j] = RBC_solver(T,γ,ρ,χ,β,ρₘ,v[j],θ[j])
+end
+
+# Generate Charts
+#for k in 1:6
+k = 1
+j = 1
+
+plot(collect(1:1:100), IRF[:,k,j], title = var[k], xlabel = "Horizon",
+     label = L"v = "*string(v[j])*L"; \theta = "*string(round(θ[j], digits = 5)),
+     )
 
 
 
