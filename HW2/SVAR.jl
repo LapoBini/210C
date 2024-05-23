@@ -23,7 +23,7 @@ f         = Fred(api_key);
 # Get monthly Data
 R = get_data(f, "FEDFUNDS", frequency = "m").data[:,end-1:end];
 u = get_data(f, "UNRATE", frequency = "m").data[:,end-1:end];
-P = get_data(f, "GDPDEF", frequency = "q").data[:,end-1:end]
+P = get_data(f, "GDPDEF", frequency = "q").data[:,end-1:end];
 
 # Function to download recession dates 
 function get_recessions(
@@ -137,7 +137,7 @@ end
 
 
 # ------------------------------------------------------------------------------
-# 3 - Choleski Function
+# 3 - Choleski Functions
 # ------------------------------------------------------------------------------
 function IRF_CH(
     y,  # T x K
@@ -202,7 +202,7 @@ function WILD_CH(
     # WILD_CH Compute the confidence interval using wild bootstrap
     # It computes the confidence interval accounting for the
     # heteroskedasticity in the error term.
-
+    #
     # How I compute the quantiles: I am going to apply the quantile function 
     # to slices of IRFS along the fourth dimension (bootstrap repetitions).
     # The function u -> quantile(u, a) computes the specified quantiles for
@@ -215,7 +215,7 @@ function WILD_CH(
     
     # Set up variables for iteration 
     counter = 1;
-    a       = [.05, .10, .15];
+    a       = [.05, 0.1, 0.36];
     T, K    = size(y);
     
     # Matrix which will save the results
@@ -275,22 +275,49 @@ R = get_data(f, "FEDFUNDS", frequency = "q", aggregation_method = "avg").data[:,
 u = get_data(f, "UNRATE", frequency = "q", aggregation_method = "avg").data[:,end-1:end];
 
 # Select the insample dates
+P   = DataFrame([P[5:end,1] (log.(P[5:end,2]) - log.(P[1:end-4,2]))*100], [:date, :value]);
 dic = Dict("R" => R, "u" => u, "P" => P)
+
 for i in 1:length(key)
-    # Pick the correct date 
     aux = findall((dic[key[i]].date .>= Date("01/01/1960","dd/mm/yyyy")) .& 
                   (dic[key[i]].date .<= Date("01/10/2007", "dd/mm/yyyy")));
     dic[key[i]] = dic[key[i]][aux,:];
 end
 
 # Specification VAR
-y    = [log.(dic["P"].value) dic["u"].value dic["R"].value];
+y    = [dic["P"].value dic["u"].value dic["R"].value] |> Array{Float64,2};
 p    = 4;
-H    = 50;
-nrep = 5000;
+H    = 20;
+nrep = 1000;
 
 # Estimation SVAR 
 IRF, B, U, B₀ = IRF_CH(y, p, H);
 Low, Upp      = WILD_CH(y, B, U, p, H, nrep);
 
+# Plot 
+x_ax  = collect(0:1:H);
+ticks = [0; collect(4:4:H)];
+c     = [0.15, 0.25, 0.85];
+var   = ["GDP Deflator"; "Unemployment Rate"; "Fed Funds Rate"];
+shock = ["Inflation Shock", "Unemployment Shock", "Monetary Policy Shock"];
+sav   = ["Chol_inf"; "Chol_un"; "Chol_mon"];
 
+
+j = 3; k = 3;
+plot(size = (700,600), ytickfontsize  = 15, xtickfontsize  = 15,
+     xguidefontsize = 15, legendfontsize = 13, boxfontsize = 15,
+     framestyle = :box, yguidefontsize = 15, titlefontsize = 20)
+
+# Plot bootstrap confidence interval 
+for a in 1:size(Low, 4)
+    plot!(x_ax, [IRF[1,j,k]; Low[2:end,j,k,a]], fillrange = [IRF[1,j,k]; Upp[2:end,j,k,a]],
+          lw = 1, alpha = c[a], color = "deepskyblue1", xticks = ticks,
+          label = "")
+end
+Plots.plot!(x_ax, IRF[:,j,k], lw = 3, color = "black", xticks = ticks,
+            label = var[j])
+hline!([0], color = "black", lw = 1, label = nothing)
+Plots.plot!(xlabel = "Quarters", ylabel = "", title = shock[k],
+                    left_margin = 1Plots.mm, right_margin = 3Plots.mm,
+                    bottom_margin = 1Plots.mm, top_margin = 3Plots.mm,
+                    xlims = (0,H))
