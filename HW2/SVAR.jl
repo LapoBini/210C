@@ -289,5 +289,8 @@ p    = 4;
 H    = 50;
 nrep = 5000;
 
+# Estimation SVAR 
 IRF, B, U, B₀ = IRF_CH(y, p, H);
 Low, Upp      = WILD_CH(y, B, U, p, H, nrep);
+
+
