@@ -367,7 +367,7 @@ savefig("./HW2/results/reconstructed_mon_shock.pdf")
 
 
 # ------------------------------------------------------------------------------
-# 5 - Functions IRF with Romer and Romer Shock 
+# 5 - Functions IRF with Romer and Romer Shock (Not WORKING, done in STATA)
 # ------------------------------------------------------------------------------
 function IRF_RR(
     y,  # T x K
@@ -428,108 +428,35 @@ function IRF_RR(
 
 end
 
-function WILD_RR(
-    y,   # data
-    B,   # OLS coeff
-    u,   # residual
-    p,   # lag order
-    s,   # lag shock
-    Z,   # lag instrument
-    nrep # bootstrap repetitions
-    )
-
-    # --------------------------------------------------------------------------
-    # WILD_CH Compute the confidence interval using wild bootstrap
-    # It computes the confidence interval accounting for the
-    # heteroskedasticity in the error term.
-    #
-    # How I compute the quantiles: I am going to apply the quantile function 
-    # to slices of IRFS along the fourth dimension (bootstrap repetitions).
-    # The function u -> quantile(u, a) computes the specified quantiles for
-    # each slice. The dims=(4,) argument specifies that the function should 
-    # be applied along the fourth dimension. The last dimension of the output
-    # matrix will give the quantiles 
-    #
-    # Author: Lapo Bini, lbini@ucsd.edu
-    # --------------------------------------------------------------------------
-    
-    # Set up variables for iteration 
-    counter = 1;
-    a       = [.05, 0.1, 0.36];
-    T, K    = size(y);
-    
-    # Matrix which will save the results
-    IRFS = zeros(H+1, K, nrep-1);      # nrep-simulations for IRF
-    Low  = zeros(H+1, length(a), K);   # lower quantiles for each yₜ
-    Upp  = zeros(H+1, length(a), K);   # upper quantiles for each yₜ
-    
-    # Bootstrap preliminaries
-    data = [-1 1];          # for the random draw 
-    U    = u';              # Residuals in TxK dimension
-    yᵇ   = zeros(T, K);     # for saving the simulated Yₜ
-    A    = B[:,2:end];      # matrix of coefficients for yₜ₋₁, ⋯ , yₜ₋ₚ
-    A₀   = B[:,1];          # Intercept
-    
-    # Bootstrap loop 
-    while counter < nrep
-
-        # Random draw to correct for heteroskedasticity w ~ [-1,1]
-        w  = rand(data, T);   
-        uᵇ = U.*w[p+1:end];  
-        
-        # the first p-observations are fixed 
-        for j=1:K
-            for i=1:p
-                yᵇ[i, j] = y[i, j];
-            end
-        end
-        
-        # Generate bootstrap sample Yₜᵇ for t = p+1,...,T.
-        for j = (p+1):T
-            xᵇ      = yᵇ[j-1:-1:j-p, :]';                      
-            yᵇ[j,:] = A₀ + A*vec(xᵇ) + uᵇ[j-p,:] 
-        end
-        
-        # Compute IRF on bootstrap sample and save results
-        IRFS[:,:,counter] = IRF_RR(yᵇ, p, s, Z)[1];
-
-        # Update counter 
-        counter += 1; 
-    end
-    
-    # Compute quantiles 
-    Low = mapslices(u->quantile(u, a./2), IRFS, dims=(3,))
-    Upp = mapslices(u->quantile(u, 1.0.-a./2), IRFS, dims=(3,))
-
-    return Low, Upp
-
-end
-
 
 # ------------------------------------------------------------------------------
 # 6 - Produce Result Romer & Romer 
 # ------------------------------------------------------------------------------
 data = DataFrame(XLSX.readtable("./HW2/shock.xlsx", "Sheet2", header = false)) |> Array{Any,2};
 Z    = [zeros(36); data[2:end,end]] # using romer full 
-p    = 8;
-s    = 12;
+Y    = [Z y] |> Array{Float64,2};
 
-IRF, B, U = IRF_RR(y, p, s, Z);
-Low, Upp  = WILD_RR(y, B, U, p, s, Z, nrep);
+p    = 4;
+H    = 32;
+nrep = 1000;
+
+# Estimation SVAR 
+IRF, B, U, B₀ = IRF_CH(Y, p, H);
+Low, Upp      = WILD_CH(Y, B, U, p, H, nrep);
 
 # Plot 
 x_ax  = collect(0:1:H);
 ticks = [0; collect(4:4:H)];
 c     = [0.15, 0.25, 0.85];
-var   = ["GDP Deflator"; "Unemployment Rate"; "Fed Funds Rate"];
-shock = ["Inflation Shock", "Unemployment Shock", "Monetary Policy Shock"];
-sav   = ["Chol_inf"; "Chol_un"; "Chol_mon"];
+var   = ["RR Shock"; "GDP Deflator"; "Unemployment Rate"; "Fed Funds Rate"];
+shock = ["Shock To RR", "Inflation Shock", "Unemployment Shock", "Monetary Policy Shock"];
+sav   = ["Chol_RR_toRR"; "Chol_RR_inf"; "Chol_RR_un"; "Chol_RR_mon"];
 
 # Plot
-for k in 1:size(y,2)
+for k in 1:size(Y,2)
 
     # Prepare Grid
-    plot(layout = grid(3,1), size = (1200,1100), ytickfontsize  = 15, xtickfontsize  = 15,
+    plot(layout = grid(4,1), size = (1200,1100), ytickfontsize  = 15, xtickfontsize  = 15,
         xguidefontsize = 15, legendfontsize = 13, boxfontsize = 15,
         framestyle = :box, yguidefontsize = 15, titlefontsize = 20,
         left_margin = 1Plots.mm, right_margin = 3Plots.mm,
@@ -537,7 +464,7 @@ for k in 1:size(y,2)
     plot!(xlabel = "Quarters", ylabel = "", xlims = (0,H), subplot = size(y,2))
     plot!(title = shock[k], subplot = 1)
 
-    for j in 1:size(y,2)
+    for j in 1:size(Y,2)
 
         # Plot bootstrap confidence interval 
         for a in 1:size(Low, 4)
