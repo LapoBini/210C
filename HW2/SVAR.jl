@@ -105,7 +105,8 @@ rec          = get_recessions(start_sample, end_sample, series = "USRECM");
 var = ["Fed Funds Rate"; "Unemployment Rate"; "GDP Deflator"];
 sav = ["FFR"; "UNEM"; "GDPDEF"];
 key = ["R", "u", "P"];
-dic = Dict("R" => R, "u" => u, "P" => P)
+p   = DataFrame([P[5:end,1] (log.(P[5:end,2]) - log.(P[1:end-4,2]))*100], [:date, :value]);
+dic = Dict("R" => R, "u" => u, "P" => p)
 
 # Create directory 
 ind_dir  = readdir("./HW2");
@@ -311,7 +312,7 @@ for k in 1:size(y,2)
         framestyle = :box, yguidefontsize = 15, titlefontsize = 20,
         left_margin = 1Plots.mm, right_margin = 3Plots.mm,
         bottom_margin = 1Plots.mm, top_margin = 3Plots.mm)
-    plot!(xlabel = "Quarters", ylabel = "", xlims = (0,H), subplot = j)
+    plot!(xlabel = "Quarters", ylabel = "", xlims = (0,H), subplot = size(y,2))
     plot!(title = shock[k], subplot = 1)
 
     for j in 1:size(y,2)
@@ -372,7 +373,6 @@ function IRF_RR(
     y,  # T x K
     p,  # lag order of the var
     s,  # lag order for the shock 
-    H,  # horizon IRF
     Z   # exogenous shock 
     )
 
@@ -383,7 +383,7 @@ function IRF_RR(
     # (a) given the model: Yₜ = ∑ₚ βₚ Yₜ₋ₚ + ∑ₛ γₛ Zₜ₋ₛ
     # (b) estimate Uₜ = Yₜ - ∑ₚ βₚ Yₜ₋ₚ
     # (c) estimate γₛ regression Uₜ over Zₜ
-    # (d) recursion to compute IRF 
+    # (d) recursion to compute IRF Yₜ = γₜ + ∑ₚ βₚ Yₜ₋ₚ
     # --------------------------------------------------------------------------
 
     T, K = size(y);
@@ -418,52 +418,13 @@ function IRF_RR(
     ỹ  = zeros(2s, K)
 
     for i in 1:s
-        
-        ΔY[i,:] = (Γ[:,i] + B[:,2:end]*vec(ΔY[i+7:-1:i,:]'))'
-
-
-
-    yᵢᵣ = zeros(p+Hᵢ, k);
-    ηᵢᵣ = zeros(p+Hᵢ, 1);
-    ηᵢᵣ[p+1] = 1; # shock to the policy measure
-
-    for tt = p+1:Hᵢ+p
-          xᵢᵣ = Array{Float64,2}(undef, p, k)
-          for ji = 1:p
-                xᵢᵣ[ji,:] = yᵢᵣ[tt-ji,:]
-          end
-           xᵢᵣ       = [reshape((xᵢᵣ)', 1, k*p) 0]
-           yᵢᵣ[tt,:] = xᵢᵣ * B + ηᵢᵣ[tt] .* ϕₖ;
+        ỹ[i+p,:] = (Γ[:,i] + B[:,2:end]*vec(ỹ[i+(p-1):-1:i,:]'))';
+        ΔY[i,:]  = ỹ[i+p,:];
     end
 
-    for r in 1:s
-        Γ[:,s] + 
-        
+    IRF = cumsum(ΔY, dims = 1);
 
-
-
-
-    
-    
-    # Create companion matrix and selection matrix
-    A   = [B[:,2:end]; Matrix(I, K*(p-1), K*(p-1)) zeros(K*(p-1), K)];  
-    J   = [Matrix(I, K, K) zeros(K, K*(p-1))];
-
-    # Allocation results
-    IRF = zeros(H+1, K, K);
-
-    for k in 1:K 
-        IRF[1,:,k] = B₀[:,k]';
-
-        # Compute IRF
-        for h=1:H
-            M   = J*A^h*J';
-            MM  = B₀*M;
-            IRF[h+1,:,k] = MM[:,k]';
-        end
-    end
-    
-    return IRF, B, U, B₀
+    return IRF, B, U
 
 end
 
@@ -472,7 +433,8 @@ function WILD_RR(
     B,   # OLS coeff
     u,   # residual
     p,   # lag order
-    H,   # forecast horizon
+    s,   # lag shock
+    Z,   # lag instrument
     nrep # bootstrap repetitions
     )
 
@@ -497,9 +459,9 @@ function WILD_RR(
     T, K    = size(y);
     
     # Matrix which will save the results
-    IRFS = zeros(H+1, K, K, nrep-1);      # nrep-simulations for IRF
-    Low  = zeros(H+1, length(a), K, K);   # lower quantiles for each yₜ
-    Upp  = zeros(H+1, length(a), K, K);   # upper quantiles for each yₜ
+    IRFS = zeros(H+1, K, nrep-1);      # nrep-simulations for IRF
+    Low  = zeros(H+1, length(a), K);   # lower quantiles for each yₜ
+    Upp  = zeros(H+1, length(a), K);   # upper quantiles for each yₜ
     
     # Bootstrap preliminaries
     data = [-1 1];          # for the random draw 
@@ -529,15 +491,15 @@ function WILD_RR(
         end
         
         # Compute IRF on bootstrap sample and save results
-        IRFS[:,:,:,counter] = IRF_CH(yᵇ, p, H)[1];
+        IRFS[:,:,counter] = IRF_RR(yᵇ, p, s, Z)[1];
 
         # Update counter 
         counter += 1; 
     end
     
     # Compute quantiles 
-    Low = mapslices(u->quantile(u, a./2), IRFS, dims=(4,))
-    Upp = mapslices(u->quantile(u, 1.0.-a./2), IRFS, dims=(4,))
+    Low = mapslices(u->quantile(u, a./2), IRFS, dims=(3,))
+    Upp = mapslices(u->quantile(u, 1.0.-a./2), IRFS, dims=(3,))
 
     return Low, Upp
 
@@ -551,3 +513,44 @@ data = DataFrame(XLSX.readtable("./HW2/shock.xlsx", "Sheet2", header = false)) |
 Z    = [zeros(36); data[2:end,end]] # using romer full 
 p    = 8;
 s    = 12;
+
+IRF, B, U = IRF_RR(y, p, s, Z);
+Low, Upp  = WILD_RR(y, B, U, p, s, Z, nrep);
+
+# Plot 
+x_ax  = collect(0:1:H);
+ticks = [0; collect(4:4:H)];
+c     = [0.15, 0.25, 0.85];
+var   = ["GDP Deflator"; "Unemployment Rate"; "Fed Funds Rate"];
+shock = ["Inflation Shock", "Unemployment Shock", "Monetary Policy Shock"];
+sav   = ["Chol_inf"; "Chol_un"; "Chol_mon"];
+
+# Plot
+for k in 1:size(y,2)
+
+    # Prepare Grid
+    plot(layout = grid(3,1), size = (1200,1100), ytickfontsize  = 15, xtickfontsize  = 15,
+        xguidefontsize = 15, legendfontsize = 13, boxfontsize = 15,
+        framestyle = :box, yguidefontsize = 15, titlefontsize = 20,
+        left_margin = 1Plots.mm, right_margin = 3Plots.mm,
+        bottom_margin = 1Plots.mm, top_margin = 3Plots.mm)
+    plot!(xlabel = "Quarters", ylabel = "", xlims = (0,H), subplot = size(y,2))
+    plot!(title = shock[k], subplot = 1)
+
+    for j in 1:size(y,2)
+
+        # Plot bootstrap confidence interval 
+        for a in 1:size(Low, 4)
+            plot!(x_ax, [IRF[1,j,k]; Low[2:end,j,k,a]]./IRF[1,k,k], fillrange = [IRF[1,j,k]; Upp[2:end,j,k,a]]./IRF[1,k,k],
+                lw = 1, alpha = c[a], color = "deepskyblue1", xticks = ticks,
+                label = "", subplot = j)
+        end
+
+        # Plot IRF and steady state zero line
+        Plots.plot!(x_ax, IRF[:,j,k]./IRF[1,k,k], lw = 3, color = "black", xticks = ticks,
+                    label = var[j], subplot = j)
+        hline!([0], color = "black", lw = 1, label = nothing, subplot = j, xlims = (0,H))
+    end
+
+    savefig("./HW2/results/"*sav[k]*".pdf")
+end
