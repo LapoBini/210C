@@ -25,7 +25,7 @@ using DataFrames, LinearAlgebra, Dates, Statistics, Plots, LaTeXStrings
 χ  = 1.0;
 β  = 0.99;
 ρₘ = 0.99;
-T  = 150;
+T  = 500;
 v  = [0.25; 0.5; 0.999; 2.0; 4.0];
 θ  = zeros(5);
 
