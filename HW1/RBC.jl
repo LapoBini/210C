@@ -253,6 +253,7 @@ end;
 # ------------------------------------------------------------------------------
 # Loop over different parameters calibration 
 # Allocation and prels 
+T   = 500;
 J   = length(v);
 IRF = zeros(T, 6, J);
 var = ["Output"; "Real Wage"; "Consumption"; "Composite Basket"; "Price"; "Nominal Rate"];
@@ -263,7 +264,7 @@ ind_dir  = readdir("./");
 "results" in ind_dir ? nothing : mkdir("./results");
 
 # Solve the model for different values of the parameters
-for j in 1:J
+@time for j in 1:J
     IRF[:,:,j] = RBC_solver(T,γ,ρ,χ,β,ρₘ,v[j],θ[j])
 end
 
@@ -284,7 +285,7 @@ for k in 1:6
     end
 
     # Adjust plot
-    plot!(xlims = (0, T), xticks = collect(0:25:T), 
+    plot!(xlims = (0, T), xticks = collect(0:100:T), 
           ytickfontsize  = 9, xtickfontsize  = 9, 
           titlefontsize = 17, yguidefontsize = 13, legendfontsize = 9, 
           boxfontsize = 15, framestyle = :box, left_margin = 4Plots.mm, 
