@@ -293,7 +293,7 @@ nrep = 1000;
 
 # Estimation SVAR 
 IRF, B, U, B₀ = IRF_CH(y, p, H);
-Low, Upp      = WILD_CH(y, B, U, p, H, nrep);
+Low, Upp      = WILD_CH(y, B, U, p, H, 50000);
 
 # Plot 
 x_ax  = collect(0:1:H);

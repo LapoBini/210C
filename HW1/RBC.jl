@@ -107,13 +107,13 @@ function RBC_solver(
     # Then we have that H(Y) = H(M(U,Z)) = 0 and by taking the total derivative we get:
     #
     #                              H(Y(U,Z)) = H(U,Z) = 0
-    #                              dH = dH/dU + dH/dZ = 0
-    #                               dU = - (dHdU)⁻¹ dHdZ
+    #                              dH = (∂H/∂U)dU + (∂H/∂Z)dZ = 0
+    #                              dU = - (∂H/∂U)⁻¹ (∂H/∂Z)dZ
     #
     # But since H depends on Y I have that;
     #
-    #                              (i)  dHdU = ∂H/∂Y ⋅ ∂Y/∂U 
-    #                              (ii) dHdZ = ∂H/∂Y ⋅ ∂Y/∂Z 
+    #                              (i)  ∂H/∂U = ∂H/∂Y ⋅ ∂Y/∂U 
+    #                              (ii) ∂H/∂Z = ∂H/∂Y ⋅ ∂Y/∂Z 
     #
     # Then I can compute the impulse response functions to the jᵗʰ exogenous shocks
     # as follow:
@@ -143,7 +143,7 @@ function RBC_solver(
     # Functions to construct identity matrix, zero matrix, Differencing matrix
     Iᵗ(T) = Matrix(I, T, T);
     Oᵗ(T) = zeros(T, T);
-    Δᵗ(T) = Iᵗ(T) - [zeros(T,1) Iₜ[:,1:end-1]];
+    Δᵗ(T) = -Iᵗ(T) + [zeros(T,1) Iᵗ(T)[:,1:end-1]];
 
     # Create identity matrix, zero matrix, and difference matrix 
     Iₜ = Iᵗ(T);
@@ -219,12 +219,12 @@ function RBC_solver(
     # ------------------------------------------------------------------------------
     # Remember that:
     #
-    #               Θⱼ = ∂Y/∂U ( -∂H/∂U⁻¹ ⋅ ∂H/∂Z ⋅ eⱼ ) + ∂Y/∂Z eⱼ
+    #               Θⱼ = ∂Y/∂U ( -(∂H/∂U)⁻¹ ⋅ (∂H/∂Z) ⋅ eⱼ ) + ∂Y/∂Z eⱼ
     #               Θⱼ = ∂Y/∂U ⋅ dU + ∂Y/∂Z eⱼ
     #
-    # with:     
-    #                         (i)  dHdU = ∂H/∂Y ⋅ ∂Y/∂U 
-    #                         (ii) dHdZ = ∂H/∂Y ⋅ ∂Y/∂Z 
+    # with dZ = eⱼ and with:     
+    #                         (i)  ∂H/∂U = ∂H/∂Y ⋅ ∂Y/∂U 
+    #                         (ii) ∂H/∂Z = ∂H/∂Y ⋅ ∂Y/∂Z 
     # ------------------------------------------------------------------------------
     # Compute single blocks 
     dHdU = dHdY * dYdU;
