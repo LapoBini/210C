@@ -7,7 +7,7 @@
 # Instead of using p̂ₜ as endogenous variable, I am going to use only n̂ₜ as 
 # endogenous variable, which will be give me a good computational advantage. 
 # The target condition that I use in H(U,Z) = 0 is the bond demand 
-# equation. Enjoy
+# equation.
 # ------------------------------------------------------------------------------
 
 
