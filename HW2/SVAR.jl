@@ -17,7 +17,7 @@ using CSV, XLSX, FredData, HTTP
 # 1 - Download FRED Data
 # ------------------------------------------------------------------------------
 # Establish connection with FRED API (Do not share API key)
-api_key   = "66c080f0ed7880e7df1230ef212fb8c1";
+api_key   = # INSERT YOUR FRED API KEY HERE;
 f         = Fred(api_key);
 
 # Get monthly Data
