@@ -83,9 +83,9 @@ end;
 # ------------------------------------------------------------------------------
 function RBC_solver(
     T::Int64,    # Time horizon IRF
-    γ::Float64,    # Elasticity of Intertemporal substitution 
-    ρ::Float64,    # Inverse Frisch elasticity of labor supply
-    χ::Float64,    # Preference for leisure
+    γ::Float64,  # Elasticity of Intertemporal substitution 
+    ρ::Float64,  # Inverse Frisch elasticity of labor supply
+    χ::Float64,  # Preference for leisure
     β::Float64,  # Discount Factor
     ρₘ::Float64, # Parameter AR(1) money supply shock m̂ₜ = ρₘ m̂ₜ₋₁ + ϵᵐₜ
     v::Float64,  # Parameter CES aggregator composite basket consumption vs money
