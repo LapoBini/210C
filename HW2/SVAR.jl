@@ -367,7 +367,7 @@ savefig("./HW2/results/reconstructed_mon_shock.pdf")
 
 
 # ------------------------------------------------------------------------------
-# 5 - Functions IRF with Romer and Romer Shock (Not WORKING, done in STATA)
+# 5 - Functions IRF with Romer and Romer Shock
 # ------------------------------------------------------------------------------
 function IRF_RR(
     y,  # T x K

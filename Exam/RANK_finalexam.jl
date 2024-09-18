@@ -317,7 +317,7 @@ using DataFrames, Dates, CSV, XLSX, FredData, HTTP
 # 1 - Download Data and Recession Dates 
 # ------------------------------------------------------------------------------
 # Establish connection with FRED API (Do not share API key)
-api_key   = "66c080f0ed7880e7df1230ef212fb8c1";
+api_key   = # string with your FRED API key here;
 f         = Fred(api_key);
 
 # Get monthly Data
