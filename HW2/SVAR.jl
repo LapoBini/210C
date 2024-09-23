@@ -42,7 +42,7 @@ function get_recessions(
     # ------------------------------------------------------------------------------
 
     data = [];
-    api_key   = "66c080f0ed7880e7df1230ef212fb8c1"
+    api_key   = #"PLUG HERE YOUR API KEY"
     f         = Fred(api_key)
     recession = get_data(f, series, frequency = "m")
     data      = recession.data;
