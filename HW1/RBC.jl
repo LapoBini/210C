@@ -97,20 +97,20 @@ function RBC_solver(
     # conditions of the model, I can express all of them as a function of few 
     # endogenous (U) variables and the exogenous shocks (Z):
     #
-    #                                    Y = Y(U,Z)
+    #                                    Y = N(U,Z)
     #
     # Then I can define a set of market clearing conditions (from my understanding 
     # they must be as much as the endogenous variables):
     #
-    #                                     H(Y) = 0
+    #                                     H(U Z) = 0
     #
-    # Then we have that H(Y) = H(M(U,Z)) = 0 and by taking the total derivative we get:
+    # By taking the total derivative we get:
     #
-    #                              H(Y(U,Z)) = H(U,Z) = 0
+    #                              dH(U,Z) = d0
     #                              dH = (∂H/∂U)dU + (∂H/∂Z)dZ = 0
     #                              dU = - (∂H/∂U)⁻¹ (∂H/∂Z)dZ
     #
-    # But since H depends on Y I have that;
+    # Then we can rewrite the partial derivatives as follows;
     #
     #                              (i)  ∂H/∂U = ∂H/∂Y ⋅ ∂Y/∂U 
     #                              (ii) ∂H/∂Z = ∂H/∂Y ⋅ ∂Y/∂Z 
@@ -118,7 +118,8 @@ function RBC_solver(
     # Then I can compute the impulse response functions to the jᵗʰ exogenous shocks
     # as follow:
     #
-    #                 Θⱼ = dY = ∂Y/∂U ( -∂H/∂U⁻¹ ⋅ ∂H/∂Z ⋅ eⱼ ) + ∂Y/∂Z eⱼ
+    #                 Θⱼ = dY = ∂N/∂U dU + ∂N/∂Z dZ
+    #                 Θⱼ = dY = ∂N/∂U ( -∂H/∂U⁻¹ ⋅ ∂H/∂Z ⋅ eⱼ ) + ∂N/∂Z eⱼ
     #
     # where eⱼ is the indicator vector for the structural shock. In this particular
     # case my Y is the following (coming from rearranging sligthly the log-linearized
@@ -173,7 +174,7 @@ function RBC_solver(
 
 
     # ------------------------------------------------------------------------------
-    # 2 - Compute ∂Y/∂U
+    # 2 - Compute ∂Y/∂U which is equal to ∂N/∂U  
     # ------------------------------------------------------------------------------
     C    = steady_state_c(χ, θ, β, v, γ, ρ);
     MP   = steady_state_mp(θ, β, v, χ, γ);
@@ -193,7 +194,7 @@ function RBC_solver(
 
 
     # ------------------------------------------------------------------------------
-    # 2 - Compute ∂Y/∂Z
+    # 2 - Compute ∂Y/∂Z which is equal to ∂N/∂Z 
     # ------------------------------------------------------------------------------
     # Elasticities to Total Factor Productivity Shock
     ϕya  = Iₜ;
@@ -220,7 +221,6 @@ function RBC_solver(
     # Remember that:
     #
     #               Θⱼ = ∂Y/∂U ( -(∂H/∂U)⁻¹ ⋅ (∂H/∂Z) ⋅ eⱼ ) + ∂Y/∂Z eⱼ
-    #               Θⱼ = ∂Y/∂U ⋅ dU + ∂Y/∂Z eⱼ
     #
     # with dZ = eⱼ and with:     
     #                         (i)  ∂H/∂U = ∂H/∂Y ⋅ ∂Y/∂U 
