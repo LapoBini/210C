@@ -42,7 +42,7 @@ function get_recessions(
     # ------------------------------------------------------------------------------
 
     data = [];
-    api_key   = #"PLUG HERE YOUR API KEY"
+    api_key   = #"PLUG HERE YOUR API KEY "
     f         = Fred(api_key)
     recession = get_data(f, series, frequency = "m")
     data      = recession.data;
@@ -431,6 +431,65 @@ end
 
 # ------------------------------------------------------------------------------
 # 6 - Produce Result Romer & Romer 
+# ------------------------------------------------------------------------------
+data = DataFrame(XLSX.readtable("./HW2/shock.xlsx", "Sheet2", header = false)) |> Array{Any,2};
+Z    = [zeros(36); data[2:end,end]] # using romer full 
+p    = 4;
+H    = 32;
+
+# New data transofrmation 
+R = get_data(f, "FEDFUNDS", frequency = "q", aggregation_method = "avg").data[:,end-1:end];
+U = get_data(f, "UNRATE", frequency = "q", aggregation_method = "avg").data[:,end-1:end];
+P = get_data(f, "GDPDEF", frequency = "q").data[:,end-1:end];
+
+# Select the insample dates
+r   = DataFrame([R[5:end,1] (log.(R[5:end,2]) - log.(R[1:end-4,2]))*100], [:date, :value]);
+u   = DataFrame([U[5:end,1] (log.(U[5:end,2]) - log.(U[1:end-4,2]))*100], [:date, :value]);
+p   = DataFrame([P[5:end,1] (log.(P[5:end,2]) - log.(P[1:end-4,2]))*100], [:date, :value]);
+
+dic = Dict("R" => r, "u" => u, "P" => p)
+
+for i in 1:length(key)
+    aux = findall((dic[key[i]].date .>= Date("01/01/1960","dd/mm/yyyy")) .& 
+                  (dic[key[i]].date .<= Date("01/10/2007", "dd/mm/yyyy")));
+    dic[key[i]] = dic[key[i]][aux,:];
+end
+
+# Estimation SVAR 
+y = [dic["P"].value dic["u"].value dic["R"].value] |> Array{Float64,2};
+IRF, B, U, B₀ = IRF_RR(Y, p, H, Z);
+
+# Plot 
+x_ax  = collect(0:1:H);
+ticks = [0; collect(4:4:H)];
+c     = [0.15, 0.25, 0.85];
+var   = ["GDP Deflator"; "Unemployment Rate"; "Fed Funds Rate"];
+sav   = ["RR_inf"; "RR_un"; "RR_mon"];
+
+# Plot
+for k in 1:size(Y,2)
+
+    # Prepare Grid
+    plot(layout = grid(4,1), size = (1200,1100), ytickfontsize  = 15, xtickfontsize  = 15,
+        xguidefontsize = 15, legendfontsize = 13, boxfontsize = 15,
+        framestyle = :box, yguidefontsize = 15, titlefontsize = 20,
+        left_margin = 1Plots.mm, right_margin = 3Plots.mm,
+        bottom_margin = 1Plots.mm, top_margin = 3Plots.mm)
+    plot!(xlabel = "Quarters", ylabel = "", xlims = (0,H), subplot = size(y,2))
+    plot!(title = shock[k], subplot = 1)
+
+    # Plot IRF and steady state zero line
+    Plots.plot!(x_ax, IRF[:,k]./IRF[1,3], lw = 3, color = "black", xticks = ticks,
+                label = var[j], subplot = j)
+    hline!([0], color = "black", lw = 1, label = nothing, subplot = j, xlims = (0,H))
+
+    # Save figures
+    savefig("./HW2/results/"*sav[k]*".pdf")
+end
+
+
+# ------------------------------------------------------------------------------
+# 6 - Produce Result Choleski with Romer & Romer Shock as variable
 # ------------------------------------------------------------------------------
 data = DataFrame(XLSX.readtable("./HW2/shock.xlsx", "Sheet2", header = false)) |> Array{Any,2};
 Z    = [zeros(36); data[2:end,end]] # using romer full 
