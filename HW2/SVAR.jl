@@ -437,7 +437,7 @@ Z    = [zeros(36); data[2:end,end]] # using romer full
 p    = 4;
 H    = 32;
 
-# New data transofrmation 
+# New data transofrmation (regression estimated in log difference, IRF in log)
 R = get_data(f, "FEDFUNDS", frequency = "q", aggregation_method = "avg").data[:,end-1:end];
 U = get_data(f, "UNRATE", frequency = "q", aggregation_method = "avg").data[:,end-1:end];
 P = get_data(f, "GDPDEF", frequency = "q").data[:,end-1:end];
@@ -457,7 +457,7 @@ end
 
 # Estimation SVAR 
 y = [dic["P"].value dic["u"].value dic["R"].value] |> Array{Float64,2};
-IRF, B, U, B₀ = IRF_RR(Y, p, H, Z);
+IRF, B, U, B₀ = IRF_RR(y, p, H, Z);
 
 # Plot 
 x_ax  = collect(0:1:H);
@@ -467,26 +467,23 @@ var   = ["GDP Deflator"; "Unemployment Rate"; "Fed Funds Rate"];
 sav   = ["RR_inf"; "RR_un"; "RR_mon"];
 
 # Plot
+# Prepare Grid
+plot(layout = grid(3,1), size = (1200,1100), ytickfontsize  = 15, xtickfontsize  = 15,
+     xguidefontsize = 15, legendfontsize = 13, boxfontsize = 15,
+     framestyle = :box, yguidefontsize = 15, titlefontsize = 20,
+     left_margin = 1Plots.mm, right_margin = 3Plots.mm,
+     bottom_margin = 1Plots.mm, top_margin = 3Plots.mm, title = "R&R Shock")
+plot!(xlabel = "Quarters", ylabel = "", xlims = (0,H), subplot = size(y,2))
+
+# Plot IRF and steady state zero line
 for k in 1:size(Y,2)
-
-    # Prepare Grid
-    plot(layout = grid(4,1), size = (1200,1100), ytickfontsize  = 15, xtickfontsize  = 15,
-        xguidefontsize = 15, legendfontsize = 13, boxfontsize = 15,
-        framestyle = :box, yguidefontsize = 15, titlefontsize = 20,
-        left_margin = 1Plots.mm, right_margin = 3Plots.mm,
-        bottom_margin = 1Plots.mm, top_margin = 3Plots.mm)
-    plot!(xlabel = "Quarters", ylabel = "", xlims = (0,H), subplot = size(y,2))
-    plot!(title = shock[k], subplot = 1)
-
-    # Plot IRF and steady state zero line
     Plots.plot!(x_ax, IRF[:,k]./IRF[1,3], lw = 3, color = "black", xticks = ticks,
-                label = var[j], subplot = j)
-    hline!([0], color = "black", lw = 1, label = nothing, subplot = j, xlims = (0,H))
-
-    # Save figures
-    savefig("./HW2/results/"*sav[k]*".pdf")
+                label = var[k], subplot = k)
+    hline!([0], color = "black", lw = 1, label = nothing, subplot = k, xlims = (0,H))
 end
 
+# Save figures
+savefig("./HW2/results/R&Rshock.pdf")
 
 # ------------------------------------------------------------------------------
 # 6 - Produce Result Choleski with Romer & Romer Shock as variable
